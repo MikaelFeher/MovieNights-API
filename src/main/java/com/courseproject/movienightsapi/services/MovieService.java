@@ -1,5 +1,6 @@
 package com.courseproject.movienightsapi.services;
 
+import com.courseproject.movienightsapi.models.movies.Movie;
 import com.courseproject.movienightsapi.models.movies.MovieList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,12 +18,19 @@ public class MovieService {
     @Value("${omdb.apikey}")
     private String apiKey;
 
+    @Value("${omdb.getUrl}")
+    private String getUrl;
+
     private RestTemplate restTemplate = new RestTemplate();
 
     public MovieService() {
     }
 
-    public MovieList findMovie(String title) {
+    public MovieList searchMovies(String title) {
         return restTemplate.getForObject(searchUrl + title, MovieList.class);
+    }
+
+    public Movie findMovie(String imdbId) {
+        return restTemplate.getForObject(getUrl + imdbId, Movie.class);
     }
 }

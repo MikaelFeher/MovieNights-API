@@ -3,7 +3,7 @@ package com.courseproject.movienightsapi.models.movies;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties(ignoreUnknown = false)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Movie {
     @JsonProperty("Title")
     private String title;
@@ -30,6 +30,9 @@ public class Movie {
     @JsonProperty("Type")
     private String type;
 
+    public Movie() {
+    }
+
     public Movie(String title, String imdbId, String year, String runtime, String genre, String director, String actors, String plot, String language, String poster, String website, String type) {
         this.title = title;
         this.imdbId = imdbId;
@@ -42,6 +45,7 @@ public class Movie {
         this.language = language;
         this.poster = poster;
         this.website = website;
+        this.type = type;
     }
 
     public String getTitle() {
