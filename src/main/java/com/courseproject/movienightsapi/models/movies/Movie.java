@@ -2,9 +2,14 @@ package com.courseproject.movienightsapi.models.movies;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
+@Document(collection = "Movies")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Movie {
+    @Id
+    private String id;
     @JsonProperty("Title")
     private String title;
     @JsonProperty("imdbID")
