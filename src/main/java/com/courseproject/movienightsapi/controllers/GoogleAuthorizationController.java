@@ -1,5 +1,7 @@
 package com.courseproject.movienightsapi.controllers;
 
+import com.courseproject.movienightsapi.models.users.User;
+import com.courseproject.movienightsapi.repositories.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -7,6 +9,7 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +24,9 @@ public class GoogleAuthorizationController {
 
     @Value("${spring.security.oauth2.client.registration.google.client-secret}")
     private String CLIENT_SECRET;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @RequestMapping(value = "/storeauthcode", method = RequestMethod.POST)
     public String storeauthcode(@RequestBody String code, @RequestHeader("X-Requested-With") String encoding) {
@@ -38,8 +44,7 @@ public class GoogleAuthorizationController {
                     CLIENT_ID,
                     CLIENT_SECRET,
                     code,
-                    // nodehill.com blog auto-converts non https-strings to https, thus the concatenation.
-                    "htt" + "p://localhost:8080")
+                    "http://localhost:8080")
                     .execute();
         } catch (IOException e) {
             e.printStackTrace();
@@ -76,6 +81,25 @@ public class GoogleAuthorizationController {
         String familyName = (String) payload.get("family_name");
         String givenName = (String) payload.get("given_name");
 
+        //TODO: Extract to somewhere else...
+        if (!userRepository.existsByUserId(userId)) {
+            userRepository.save(new User(
+                    userId,
+                    email,
+                    givenName,
+                    familyName,
+                    locale,
+                    pictureUrl,
+                    emailVerified,
+                    accessToken,
+                    refreshToken,
+                    expiresAt
+            ));
+        } else {
+            System.out.println("User already exists!");
+        }
+
+
         // Debugging purposes, should probably be stored in the database instead (At least "givenName").
         System.out.println("userId: " + userId);
         System.out.println("email: " + email);
@@ -96,19 +120,19 @@ public class GoogleAuthorizationController {
                         .setApplicationName("Movie Nights")
                         .build();
 
-/*
-  List the next 10 events from the primary calendar.
-    Instead of printing these with System out, you should of course store them in a database or in-memory variable to use for your application.
-{1}
-    The most important parts are:
-    event.getSummary()             // Title of calendar event
-    event.getStart().getDateTime() // Start-time of event
-    event.getEnd().getDateTime()   // Start-time of event
-    event.getStart().getDate()     // Start-date (without time) of event
-    event.getEnd().getDate()       // End-date (without time) of event
-{1}
-    For more methods and properties, see: Google Calendar Documentation.
-*/
+        /*
+          List the next 10 events from the primary calendar.
+            Instead of printing these with System out, you should of course store them in a database or in-memory variable to use for your application.
+        {1}
+            The most important parts are:
+            event.getSummary()             // Title of calendar event
+            event.getStart().getDateTime() // Start-time of event
+            event.getEnd().getDateTime()   // Start-time of event
+            event.getStart().getDate()     // Start-date (without time) of event
+            event.getEnd().getDate()       // End-date (without time) of event
+        {1}
+            For more methods and properties, see: Google Calendar Documentation.
+        */
         DateTime now = new DateTime(System.currentTimeMillis());
         Events events = null;
         try {
