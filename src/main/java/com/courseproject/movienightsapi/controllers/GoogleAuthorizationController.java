@@ -1,5 +1,7 @@
 package com.courseproject.movienightsapi.controllers;
 
+import com.courseproject.movienightsapi.models.calendars.CalendarEvent;
+import com.courseproject.movienightsapi.models.calendars.CalendarEventsList;
 import com.courseproject.movienightsapi.models.users.User;
 import com.courseproject.movienightsapi.repositories.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.*;
@@ -145,6 +147,9 @@ public class GoogleAuthorizationController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        CalendarEventsList eventsList = new CalendarEventsList();
+
         List<Event> items = events.getItems();
         if (items.isEmpty()) {
             System.out.println("No upcoming events found.");
@@ -160,8 +165,15 @@ public class GoogleAuthorizationController {
                     end = event.getStart().getDate();
                 }
                 System.out.printf("%s (%s) -> (%s)\n", event.getSummary(), start, end);
+                System.out.println(event);
+
+                eventsList.add(new CalendarEvent(event.getId(), start, end));
+
             }
         }
+
+        eventsList.printEvents();
+
         /******************************************************************/
 
         return "OK";

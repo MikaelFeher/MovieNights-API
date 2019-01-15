@@ -1,8 +1,3 @@
-// const config = require('../config.json'); //Does not work since this isn't nodejs...
-// const {CLIENT_ID, SCOPE} = config;
-//
-// console.log('Client_id: ' + CLIENT_ID);
-
 const CLIENT_ID = "1083860502733-fah04e6btu672k9p14kib88rq2h1m9dq.apps.googleusercontent.com";
 // const signInBtn = document.getElementById('signinButton');
 
@@ -10,7 +5,6 @@ function start() {
     gapi.load('auth2', function() {
         auth2 = gapi.auth2.init({
             client_id: CLIENT_ID,
-            <!-- nodehill.com blog auto-converts non https-strings to https, thus the concatenation. -->
             scope: "https://www.googleapis.com/auth/calendar.events"
         });
     });

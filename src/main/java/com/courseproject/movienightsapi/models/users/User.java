@@ -19,7 +19,6 @@ public class User {
     private Long accessTokenExpiresAt;
 
     public User(String userId, String email, String firstName, String lastName, String locale, String picture, Boolean emailVerified, String accessToken, String refreshToken, Long accessTokenExpiresAt) {
-        this.id = id;
         this.userId = userId;
         this.email = email;
         this.firstName = firstName;
