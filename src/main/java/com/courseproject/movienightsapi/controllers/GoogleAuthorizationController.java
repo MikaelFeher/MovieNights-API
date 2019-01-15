@@ -4,6 +4,7 @@ import com.courseproject.movienightsapi.models.calendars.CalendarEvent;
 import com.courseproject.movienightsapi.models.calendars.CalendarEventsList;
 import com.courseproject.movienightsapi.models.users.User;
 import com.courseproject.movienightsapi.repositories.UserRepository;
+import com.courseproject.movienightsapi.services.UserService;
 import com.google.api.client.googleapis.auth.oauth2.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -28,7 +29,7 @@ public class GoogleAuthorizationController {
     private String CLIENT_SECRET;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @RequestMapping(value = "/storeauthcode", method = RequestMethod.POST)
     public String storeauthcode(@RequestBody String code, @RequestHeader("X-Requested-With") String encoding) {
@@ -83,25 +84,6 @@ public class GoogleAuthorizationController {
         String familyName = (String) payload.get("family_name");
         String givenName = (String) payload.get("given_name");
 
-        //TODO: Extract to somewhere else...
-        if (!userRepository.existsByUserId(userId)) {
-            userRepository.save(new User(
-                    userId,
-                    email,
-                    givenName,
-                    familyName,
-                    locale,
-                    pictureUrl,
-                    emailVerified,
-                    accessToken,
-                    refreshToken,
-                    expiresAt
-            ));
-        } else {
-            System.out.println("User already exists!");
-        }
-
-
         // Debugging purposes, should probably be stored in the database instead (At least "givenName").
         System.out.println("userId: " + userId);
         System.out.println("email: " + email);
@@ -115,14 +97,14 @@ public class GoogleAuthorizationController {
 
         /******************** EXTRACT TO SEPERATE FILE ********************/
 
-        // Use an accessToken previously gotten to call Google's API
+     /*   // Use an accessToken previously gotten to call Google's API
         GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
         Calendar calendar =
                 new Calendar.Builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
                         .setApplicationName("Movie Nights")
                         .build();
 
-        /*
+        *//*
           List the next 10 events from the primary calendar.
             Instead of printing these with System out, you should of course store them in a database or in-memory variable to use for your application.
         {1}
@@ -134,7 +116,7 @@ public class GoogleAuthorizationController {
             event.getEnd().getDate()       // End-date (without time) of event
         {1}
             For more methods and properties, see: Google Calendar Documentation.
-        */
+        *//*
         DateTime now = new DateTime(System.currentTimeMillis());
         Events events = null;
         try {
@@ -174,8 +156,23 @@ public class GoogleAuthorizationController {
 
         eventsList.printEvents();
 
-        /******************************************************************/
+        userService.addUserToDB(new User(
+                userId,
+                email,
+                givenName,
+                familyName,
+                locale,
+                pictureUrl,
+                emailVerified,
+                accessToken,
+                refreshToken,
+                expiresAt,
+                eventsList
+        ));
 
+
+        *//******************************************************************//*
+*/
         return "OK";
     }
 }

@@ -1,5 +1,6 @@
 package com.courseproject.movienightsapi.models.users;
 
+import com.courseproject.movienightsapi.models.calendars.CalendarEventsList;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -17,8 +18,9 @@ public class User {
     private String accessToken;
     private String refreshToken;
     private Long accessTokenExpiresAt;
+    private CalendarEventsList calendarEventsList;
 
-    public User(String userId, String email, String firstName, String lastName, String locale, String picture, Boolean emailVerified, String accessToken, String refreshToken, Long accessTokenExpiresAt) {
+    public User(String userId, String email, String firstName, String lastName, String locale, String picture, Boolean emailVerified, String accessToken, String refreshToken, Long accessTokenExpiresAt, CalendarEventsList calendarEventsList) {
         this.userId = userId;
         this.email = email;
         this.firstName = firstName;
@@ -29,6 +31,7 @@ public class User {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.accessTokenExpiresAt = accessTokenExpiresAt;
+        this.calendarEventsList = calendarEventsList;
     }
 
     public String getId() {
@@ -73,5 +76,9 @@ public class User {
 
     public Long getAccessTokenExpiresAt() {
         return accessTokenExpiresAt;
+    }
+
+    public CalendarEventsList getCalendarEventsList() {
+        return calendarEventsList;
     }
 }
