@@ -1,9 +1,11 @@
 package com.courseproject.movienightsapi.controllers;
 
+import com.courseproject.movienightsapi.models.Google.Tokens;
 import com.courseproject.movienightsapi.models.calendars.CalendarEvent;
 import com.courseproject.movienightsapi.models.calendars.CalendarEventsList;
 import com.courseproject.movienightsapi.models.users.User;
 import com.courseproject.movienightsapi.repositories.UserRepository;
+import com.courseproject.movienightsapi.services.GoogleService;
 import com.courseproject.movienightsapi.services.UserService;
 import com.google.api.client.googleapis.auth.oauth2.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -31,6 +33,12 @@ public class GoogleAuthorizationController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private GoogleService googleService;
+
+    @Autowired
+    private UserRepository userRepository;
+
     @RequestMapping(value = "/storeauthcode", method = RequestMethod.POST)
     public String storeauthcode(@RequestBody String code, @RequestHeader("X-Requested-With") String encoding) {
         if (encoding == null || encoding.isEmpty()) {
@@ -40,28 +48,22 @@ public class GoogleAuthorizationController {
 
         GoogleTokenResponse tokenResponse = null;
         try {
-            tokenResponse = new GoogleAuthorizationCodeTokenRequest(
-                    new NetHttpTransport(),
-                    JacksonFactory.getDefaultInstance(),
-                    "https://www.googleapis.com/oauth2/v4/token",
-                    CLIENT_ID,
-                    CLIENT_SECRET,
-                    code,
-                    "http://localhost:8080")
-                    .execute();
+            tokenResponse = getGoogleToken(code);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        // Store these 3in your DB
+       /* // Store these 3in your DB
         String accessToken = tokenResponse.getAccessToken();
         String refreshToken = tokenResponse.getRefreshToken();
-        Long expiresAt = System.currentTimeMillis() + (tokenResponse.getExpiresInSeconds() * 1000);
+        Long expiresAt = System.currentTimeMillis() + (tokenResponse.getExpiresInSeconds() * 1000);*/
+
+//        Tokens tokens = new Tokens(tokenResponse);
 
         // Debug purpose only
-        System.out.println("accessToken: " + accessToken);
-        System.out.println("refreshToken: " + refreshToken);
-        System.out.println("expiresAt: " + expiresAt);
+//        System.out.println("accessToken: " + tokens.getAccessToken());
+//        System.out.println("refreshToken: " + tokens.getRefreshToken());
+//        System.out.println("expiresAt: " + tokens.getExpiresAt());
 
         /******************** EXTRACT TO SEPERATE FILE ********************/
         // Get profile info from ID token (Obtained at the last step of OAuth2)
@@ -74,17 +76,20 @@ public class GoogleAuthorizationController {
         GoogleIdToken.Payload payload = idToken.getPayload();
 
         // Use THIS ID as a key to identify a google user-account.
-        String userId = payload.getSubject();
+//        String userId = payload.getSubject();
+//
+//        String email = payload.getEmail();
+//        boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+//        String name = (String) payload.get("name");
+//        String pictureUrl = (String) payload.get("picture");
+//        String locale = (String) payload.get("locale");
+//        String familyName = (String) payload.get("family_name");
+//        String givenName = (String) payload.get("given_name");
 
-        String email = payload.getEmail();
-        boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
-        String name = (String) payload.get("name");
-        String pictureUrl = (String) payload.get("picture");
-        String locale = (String) payload.get("locale");
-        String familyName = (String) payload.get("family_name");
-        String givenName = (String) payload.get("given_name");
 
-        // Debugging purposes, should probably be stored in the database instead (At least "givenName").
+        userService.createUser(googleService.getUserProfile(payload), tokenResponse);
+
+       /* // Debugging purposes, should probably be stored in the database instead (At least "givenName").
         System.out.println("userId: " + userId);
         System.out.println("email: " + email);
         System.out.println("emailVerified: " + emailVerified);
@@ -92,7 +97,7 @@ public class GoogleAuthorizationController {
         System.out.println("pictureUrl: " + pictureUrl);
         System.out.println("locale: " + locale);
         System.out.println("familyName: " + familyName);
-        System.out.println("givenName: " + givenName);
+        System.out.println("givenName: " + givenName);*/
         /******************************************************************/
 
         /******************** EXTRACT TO SEPERATE FILE ********************/
@@ -175,4 +180,25 @@ public class GoogleAuthorizationController {
 */
         return "OK";
     }
+
+    @GetMapping("/refreshtoken/{id}")
+    public User refreshToken(@PathVariable String id) {
+        User user = userRepository.findById(id).get();
+        System.out.println("Accesstoken: " + user.getAccessToken());
+        googleService.refreshToken(user);
+        return userRepository.findById(id).get();
+    }
+
+    private GoogleTokenResponse getGoogleToken(String code) throws IOException {
+        return new GoogleAuthorizationCodeTokenRequest(
+                new NetHttpTransport(),
+                JacksonFactory.getDefaultInstance(),
+                "https://www.googleapis.com/oauth2/v4/token",
+                CLIENT_ID,
+                CLIENT_SECRET,
+                code,
+                "http://localhost:8080")
+                .execute();
+    }
+
 }

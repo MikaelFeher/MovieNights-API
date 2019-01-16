@@ -1,5 +1,6 @@
 package com.courseproject.movienightsapi.models.users;
 
+import com.courseproject.movienightsapi.models.Google.GoogleUserProfile;
 import com.courseproject.movienightsapi.models.calendars.CalendarEventsList;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -19,19 +20,34 @@ public class User {
     private String refreshToken;
     private Long accessTokenExpiresAt;
     private CalendarEventsList calendarEventsList;
+    private GoogleUserProfile userProfile;
 
-    public User(String userId, String email, String firstName, String lastName, String locale, String picture, Boolean emailVerified, String accessToken, String refreshToken, Long accessTokenExpiresAt, CalendarEventsList calendarEventsList) {
-        this.userId = userId;
-        this.email = email;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.locale = locale;
-        this.picture = picture;
-        this.emailVerified = emailVerified;
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
-        this.accessTokenExpiresAt = accessTokenExpiresAt;
-        this.calendarEventsList = calendarEventsList;
+//    public User(String userId, String email, String firstName, String lastName, String locale, String picture, Boolean emailVerified, String accessToken, String refreshToken, Long accessTokenExpiresAt, CalendarEventsList calendarEventsList) {
+//        this.userId = userId;
+//        this.email = email;
+//        this.firstName = firstName;
+//        this.lastName = lastName;
+//        this.locale = locale;
+//        this.picture = picture;
+//        this.emailVerified = emailVerified;
+//        this.accessToken = accessToken;
+//        this.refreshToken = refreshToken;
+//        this.accessTokenExpiresAt = accessTokenExpiresAt;
+//        this.calendarEventsList = calendarEventsList;
+//    }
+
+    public User(GoogleUserProfile userProfile) {
+        try {
+            this.userId = userProfile.getUserId();
+            this.email = userProfile.getEmail();
+            this.firstName = userProfile.getFirstName();
+            this.lastName = userProfile.getLastName();
+            this.locale = userProfile.getLocale();
+            this.picture = userProfile.getPicture();
+            this.emailVerified = userProfile.getEmailVerified();
+        } catch (Exception e) {
+            System.out.println("Hello");
+        }
     }
 
     public String getId() {
@@ -80,5 +96,21 @@ public class User {
 
     public CalendarEventsList getCalendarEventsList() {
         return calendarEventsList;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public void setAccessTokenExpiresAt(Long accessTokenExpiresAt) {
+        this.accessTokenExpiresAt = accessTokenExpiresAt;
+    }
+
+    public void setCalendarEventsList(CalendarEventsList calendarEventsList) {
+        this.calendarEventsList = calendarEventsList;
     }
 }
