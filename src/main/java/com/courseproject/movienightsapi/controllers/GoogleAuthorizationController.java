@@ -1,8 +1,5 @@
 package com.courseproject.movienightsapi.controllers;
 
-import com.courseproject.movienightsapi.models.Google.Tokens;
-import com.courseproject.movienightsapi.models.calendars.CalendarEvent;
-import com.courseproject.movienightsapi.models.calendars.CalendarEventsList;
 import com.courseproject.movienightsapi.models.users.User;
 import com.courseproject.movienightsapi.repositories.UserRepository;
 import com.courseproject.movienightsapi.services.GoogleService;
@@ -10,16 +7,12 @@ import com.courseproject.movienightsapi.services.UserService;
 import com.google.api.client.googleapis.auth.oauth2.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.DateTime;
-import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.model.Event;
-import com.google.api.services.calendar.model.Events;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 public class GoogleAuthorizationController {
@@ -40,12 +33,13 @@ public class GoogleAuthorizationController {
     private UserRepository userRepository;
 
     @RequestMapping(value = "/storeauthcode", method = RequestMethod.POST)
-    public String storeauthcode(@RequestBody String code, @RequestHeader("X-Requested-With") String encoding) {
+    public HttpStatus storeauthcode(@RequestBody String code, @RequestHeader("X-Requested-With") String encoding) {
         if (encoding == null || encoding.isEmpty()) {
             // Without the `X-Requested-With` header, this request could be forged. Aborts.
-            return "Error, wrong headers";
+            return HttpStatus.UNAUTHORIZED;
         }
 
+        // Get GoogleTokenResponse...
         GoogleTokenResponse tokenResponse = null;
         try {
             tokenResponse = getGoogleToken(code);
@@ -53,19 +47,6 @@ public class GoogleAuthorizationController {
             e.printStackTrace();
         }
 
-       /* // Store these 3in your DB
-        String accessToken = tokenResponse.getAccessToken();
-        String refreshToken = tokenResponse.getRefreshToken();
-        Long expiresAt = System.currentTimeMillis() + (tokenResponse.getExpiresInSeconds() * 1000);*/
-
-//        Tokens tokens = new Tokens(tokenResponse);
-
-        // Debug purpose only
-//        System.out.println("accessToken: " + tokens.getAccessToken());
-//        System.out.println("refreshToken: " + tokens.getRefreshToken());
-//        System.out.println("expiresAt: " + tokens.getExpiresAt());
-
-        /******************** EXTRACT TO SEPERATE FILE ********************/
         // Get profile info from ID token (Obtained at the last step of OAuth2)
         GoogleIdToken idToken = null;
         try {
@@ -75,41 +56,18 @@ public class GoogleAuthorizationController {
         }
         GoogleIdToken.Payload payload = idToken.getPayload();
 
-        // Use THIS ID as a key to identify a google user-account.
-//        String userId = payload.getSubject();
-//
-//        String email = payload.getEmail();
-//        boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
-//        String name = (String) payload.get("name");
-//        String pictureUrl = (String) payload.get("picture");
-//        String locale = (String) payload.get("locale");
-//        String familyName = (String) payload.get("family_name");
-//        String givenName = (String) payload.get("given_name");
+        // Create a user, assign tokens and save to db...
+        userService.createUser(payload, tokenResponse);
 
-
-        userService.createUser(googleService.getUserProfile(payload), tokenResponse);
-
-       /* // Debugging purposes, should probably be stored in the database instead (At least "givenName").
-        System.out.println("userId: " + userId);
-        System.out.println("email: " + email);
-        System.out.println("emailVerified: " + emailVerified);
-        System.out.println("name: " + name);
-        System.out.println("pictureUrl: " + pictureUrl);
-        System.out.println("locale: " + locale);
-        System.out.println("familyName: " + familyName);
-        System.out.println("givenName: " + givenName);*/
-        /******************************************************************/
+        // TODO: Extract functionality to get calendar events to GoogleService.java...
+        // TODO: Create functionality to parse available times in the calendar...
+        // TODO: Create functionality to plan events...
+        // TODO: Create functionality to create planned events in the users calendars...
+        // TODO: Create functionality to parse available times in the calendar...
 
         /******************** EXTRACT TO SEPERATE FILE ********************/
 
-     /*   // Use an accessToken previously gotten to call Google's API
-        GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
-        Calendar calendar =
-                new Calendar.Builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
-                        .setApplicationName("Movie Nights")
-                        .build();
-
-        *//*
+   /*
           List the next 10 events from the primary calendar.
             Instead of printing these with System out, you should of course store them in a database or in-memory variable to use for your application.
         {1}
@@ -178,7 +136,7 @@ public class GoogleAuthorizationController {
 
         *//******************************************************************//*
 */
-        return "OK";
+        return HttpStatus.OK;
     }
 
     @GetMapping("/refreshtoken/{id}")

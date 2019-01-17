@@ -1,9 +1,9 @@
 package com.courseproject.movienightsapi.services;
 
-import com.courseproject.movienightsapi.models.Google.GoogleUserProfile;
 import com.courseproject.movienightsapi.models.Google.Tokens;
 import com.courseproject.movienightsapi.models.users.User;
 import com.courseproject.movienightsapi.repositories.UserRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import org.springframework.stereotype.Service;
 
@@ -17,13 +17,25 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public void createUser(GoogleUserProfile userProfile, GoogleTokenResponse tokenResponse) {
-        User newUser = new User(userProfile);
+    public void createUser(GoogleIdToken.Payload payload, GoogleTokenResponse tokenResponse) {
+        User newUser = new User(
+            payload.getSubject(),
+            payload.getEmail(),
+            (String) payload.get("given_name"),
+            (String) payload.get("family_name"),
+            (String) payload.get("locale"),
+            (String) payload.get("picture"),
+            Boolean.valueOf(payload.getEmailVerified())
+        );
         Tokens tokens = new Tokens(tokenResponse);
-        newUser.setAccessToken(tokens.getAccessToken());
-        newUser.setRefreshToken(tokens.getRefreshToken());
-        newUser.setAccessTokenExpiresAt(tokens.getExpiresAt());
+        setUserTokens(newUser, tokens);
         addUserToDB(newUser);
+    }
+
+    private void setUserTokens(User user, Tokens tokens) {
+        user.setAccessToken(tokens.getAccessToken());
+        user.setRefreshToken(tokens.getRefreshToken());
+        user.setAccessTokenExpiresAt(tokens.getExpiresAt());
     }
 
     private void addUserToDB(User user) {
@@ -37,5 +49,9 @@ public class UserService {
         userToUpdate.setAccessToken(accessToken);
         userToUpdate.setAccessTokenExpiresAt(accessTokenExpiresAt);
         userRepository.save(userToUpdate);
+    }
+
+    public User findUser(String userId) {
+        return userRepository.findByUserId(userId);
     }
 }
