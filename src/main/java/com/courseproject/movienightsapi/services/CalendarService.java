@@ -15,9 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class CalendarService {
@@ -85,11 +83,13 @@ public class CalendarService {
     }
 
     public void findAvailableDates() {
+        List<User> users = userRepository.findAll();
+        Map<LocalDate, LocalTime> availableTimes = new HashMap<>();
         Long oneDay = 3600 * 24L * 1000;
         Long twoHours = oneDay/12;
         Long oneHour = twoHours/2;
-        Long sevenOClock = oneHour * 7;
-        Long elevenOClock = oneHour * 11;
+        Long sevenOClock = oneHour * 19;
+        Long elevenOClock = oneHour * 23;
 
         Long start = System.currentTimeMillis();
         Long end = start + 3600 * 24 * 7 * 1000;
@@ -98,11 +98,39 @@ public class CalendarService {
         DateTime hour;
         // TODO: The date and hour calculation works! Now needs to be compared with events in users calendar and displayed in a better way...
         for (Long i = start; i < end; i += oneDay) {
-            for (Long j = 0L; j < oneDay - 1000; j += oneHour) {
-                System.out.println("Day: " + LocalDateTime.ofInstant(Instant.ofEpochMilli(i), ZoneId.systemDefault()).toLocalDate());
-                System.out.println("Hour: " + LocalTime.ofSecondOfDay(j/1000));
+            final Long finalI = i;
+//            System.out.println("Day: " + LocalDateTime.ofInstant(Instant.ofEpochMilli(i), ZoneId.systemDefault()).toLocalDate());
+            for (Long j = sevenOClock; j < oneDay - 1000; j += oneHour) {
+                final Long finalJ = j;
+                users.stream().forEach(user -> {
+                    user.getEventList()
+                            .stream()
+                            .forEach(calendarEvent -> {  // TODO: DUH, only 4 calendar events u moron!!!
+                                if(getDate(calendarEvent.getStartsAt()).equals(getDate(finalI))){
+                                    if (getHour(calendarEvent.getStartsAt()).isBefore(getHour(finalJ)) || getHour(calendarEvent.getStartsAt()).isAfter(getHour(finalJ + oneHour))) {
+                                        availableTimes.put(getDate(finalI), getHour(finalJ));
+                                    }
+                                }
+
+                            });
+                });
+//                System.out.println("Hour: " + LocalTime.ofSecondOfDay(j/1000));
             }
         }
+        for (Map.Entry<LocalDate, LocalTime> entry : availableTimes.entrySet()){
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+
+        }
+
+    }
+
+    private LocalDate getDate(Long value) {
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneId.systemDefault()).toLocalDate();
+    }
+
+    private LocalTime getHour(Long value) {
+//        return LocalTime.ofSecondOfDay(value/1000);
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneId.systemDefault()).toLocalTime();
 
     }
 }

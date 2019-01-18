@@ -1,5 +1,6 @@
 package com.courseproject.movienightsapi.repositories;
 
+import com.courseproject.movienightsapi.models.calendars.CalendarEvent;
 import com.courseproject.movienightsapi.models.users.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
