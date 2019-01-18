@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.LocalDate;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -96,11 +96,11 @@ public class CalendarService {
 
         DateTime day;
         DateTime hour;
-        // TODO: Needs work...
+        // TODO: The date and hour calculation works! Now needs to be compared with events in users calendar and displayed in a better way...
         for (Long i = start; i < end; i += oneDay) {
             for (Long j = 0L; j < oneDay - 1000; j += oneHour) {
-                System.out.println("Day: " + LocalDate.now().getDayOfWeek());
-                System.out.println("Hour: " + new Date(j).getHours());
+                System.out.println("Day: " + LocalDateTime.ofInstant(Instant.ofEpochMilli(i), ZoneId.systemDefault()).toLocalDate());
+                System.out.println("Hour: " + LocalTime.ofSecondOfDay(j/1000));
             }
         }
 
