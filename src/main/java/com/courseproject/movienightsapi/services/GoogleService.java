@@ -30,7 +30,7 @@ public class GoogleService {
     public void refreshToken(User user) {
         GoogleCredential credential = getRefreshedCredentials(user.getRefreshToken());
         String accessToken = credential.getAccessToken();
-        Long tokenExpiresAt = System.currentTimeMillis();
+        Long tokenExpiresAt = System.currentTimeMillis() + (credential.getExpiresInSeconds() * 1000);
         userService.updateAccessToken(user, accessToken, tokenExpiresAt);
     }
 

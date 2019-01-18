@@ -1,6 +1,7 @@
 package com.courseproject.movienightsapi.services;
 
 import com.courseproject.movienightsapi.models.calendars.CalendarEvent;
+import com.courseproject.movienightsapi.models.calendars.TimeSlot;
 import com.courseproject.movienightsapi.models.users.User;
 import com.courseproject.movienightsapi.repositories.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
@@ -15,7 +16,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class CalendarService {
@@ -23,6 +26,8 @@ public class CalendarService {
     private GoogleService googleService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private UserService userService;
 
     public List<CalendarEvent> populateCalendarEventsList(User user) {
         List<CalendarEvent> eventsList = new ArrayList<>();
@@ -82,46 +87,55 @@ public class CalendarService {
                 .build();
     }
 
-    public void findAvailableDates() {
+    public List<TimeSlot> findAvailableTimes() {
         List<User> users = userRepository.findAll();
-        Map<LocalDate, LocalTime> availableTimes = new HashMap<>();
-        Long oneDay = 3600 * 24L * 1000;
-        Long twoHours = oneDay/12;
-        Long oneHour = twoHours/2;
-        Long sevenOClock = oneHour * 19;
-        Long elevenOClock = oneHour * 23;
+        List<TimeSlot> userEvents = new ArrayList<>();
+        List<TimeSlot> availableTimes = new ArrayList<>();
 
-        Long start = System.currentTimeMillis();
-        Long end = start + 3600 * 24 * 7 * 1000;
+        LocalDateTime start = LocalDateTime.of(LocalDate.now(), LocalTime.of(19, 00));
+        LocalDateTime end = LocalDateTime.of(start.plusWeeks(1).toLocalDate(), LocalTime.of(23, 59));
 
-        DateTime day;
-        DateTime hour;
-        // TODO: The date and hour calculation works! Now needs to be compared with events in users calendar and displayed in a better way...
-        for (Long i = start; i < end; i += oneDay) {
-            final Long finalI = i;
-//            System.out.println("Day: " + LocalDateTime.ofInstant(Instant.ofEpochMilli(i), ZoneId.systemDefault()).toLocalDate());
-            for (Long j = sevenOClock; j < oneDay - 1000; j += oneHour) {
-                final Long finalJ = j;
-                users.stream().forEach(user -> {
-                    user.getEventList()
-                            .stream()
-                            .forEach(calendarEvent -> {  // TODO: DUH, only 4 calendar events u moron!!!
-                                if(getDate(calendarEvent.getStartsAt()).equals(getDate(finalI))){
-                                    if (getHour(calendarEvent.getStartsAt()).isBefore(getHour(finalJ)) || getHour(calendarEvent.getStartsAt()).isAfter(getHour(finalJ + oneHour))) {
-                                        availableTimes.put(getDate(finalI), getHour(finalJ));
-                                    }
-                                }
+        populateUserEventsList(users, userEvents);
 
-                            });
-                });
-//                System.out.println("Hour: " + LocalTime.ofSecondOfDay(j/1000));
+        // Populate availableTimes...
+        while(start.isBefore(end)) {
+            availableTimes.add(new TimeSlot(start));
+            start = start.plusHours(1);
+        }
+
+        // Filter out timeslots before 19:00...
+        availableTimes = availableTimes.stream().filter(timeSlot -> timeSlot.getStart().toLocalTime().isAfter(LocalTime.of(18, 00))).collect(Collectors.toList());
+
+        for (int i  = 0; i < availableTimes.size(); i++) {
+            for (int j = 0; j < userEvents.size(); j++) {
+                if ((availableTimes.get(i).getStart().isAfter(userEvents.get(j).getStart()) && availableTimes.get(i).getEnd().isBefore(userEvents.get(j).getEnd())) ||
+                    (availableTimes.get(i).getStart().isBefore(userEvents.get(j).getStart()) && availableTimes.get(i).getEnd().isBefore(userEvents.get(j).getEnd())) ||
+                    (availableTimes.get(i).getStart().isBefore(userEvents.get(j).getStart()) && availableTimes.get(i).getEnd().isBefore(userEvents.get(j).getEnd().plusHours(1)))) {
+
+                    availableTimes.remove(i);
+                }
             }
         }
-        for (Map.Entry<LocalDate, LocalTime> entry : availableTimes.entrySet()){
-            System.out.println(entry.getKey() + ": " + entry.getValue());
+        return availableTimes;
+    }
 
-        }
+    private void populateUserEventsList(List<User> users, List<TimeSlot> userEvents) throws NullPointerException{
+        users.stream().forEach(user -> {
+            try {
+                userService.updateEventsList(user, populateCalendarEventsList(user));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            user.getEventList()
+                    .stream()
+                    .forEach(calendarEvent -> {
+                        userEvents.add(new TimeSlot(getLDTFromMilliseconds(calendarEvent.getStartsAt()).truncatedTo(ChronoUnit.HOURS), getLDTFromMilliseconds(calendarEvent.getEndsAt()).truncatedTo(ChronoUnit.HOURS)));
+                    });
+        });
+    }
 
+    private LocalDateTime getLDTFromMilliseconds(Long value) {
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneId.systemDefault());
     }
 
     private LocalDate getDate(Long value) {
@@ -129,8 +143,6 @@ public class CalendarService {
     }
 
     private LocalTime getHour(Long value) {
-//        return LocalTime.ofSecondOfDay(value/1000);
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneId.systemDefault()).toLocalTime();
-
     }
 }
