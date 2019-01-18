@@ -1,8 +1,11 @@
 package com.courseproject.movienightsapi.models.users;
 
-import com.courseproject.movienightsapi.models.calendars.CalendarEventsList;
+import com.courseproject.movienightsapi.models.calendars.CalendarEvent;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "Users")
 public class User {
@@ -18,7 +21,7 @@ public class User {
     private String accessToken;
     private String refreshToken;
     private Long accessTokenExpiresAt;
-    private CalendarEventsList calendarEventsList;
+    private List<CalendarEvent> eventList = new ArrayList<>();
 
     public User(String userId, String email, String firstName, String lastName, String locale, String picture, Boolean emailVerified) {
         this.userId = userId;
@@ -74,10 +77,6 @@ public class User {
         return accessTokenExpiresAt;
     }
 
-    public CalendarEventsList getCalendarEventsList() {
-        return calendarEventsList;
-    }
-
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
     }
@@ -90,8 +89,16 @@ public class User {
         this.accessTokenExpiresAt = accessTokenExpiresAt;
     }
 
-    public void setCalendarEventsList(CalendarEventsList calendarEventsList) {
-        this.calendarEventsList = calendarEventsList;
+    public List<CalendarEvent> getEventList() {
+        return eventList;
+    }
+
+    public void setEventList(List<CalendarEvent> eventList) {
+        this.eventList = eventList;
+    }
+
+    public void addEvents(CalendarEvent event) {
+        this.eventList.add(event);
     }
 
     @Override
@@ -108,7 +115,7 @@ public class User {
                 ", accessToken='" + accessToken + '\'' +
                 ", refreshToken='" + refreshToken + '\'' +
                 ", accessTokenExpiresAt=" + accessTokenExpiresAt +
-                ", calendarEventsList=" + calendarEventsList +
+//                ", calendarEventsList=" + calendarEventsList +
                 '}';
     }
 }

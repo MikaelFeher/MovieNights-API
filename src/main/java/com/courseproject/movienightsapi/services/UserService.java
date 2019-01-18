@@ -1,23 +1,29 @@
 package com.courseproject.movienightsapi.services;
 
 import com.courseproject.movienightsapi.models.Google.Tokens;
+import com.courseproject.movienightsapi.models.calendars.CalendarEvent;
 import com.courseproject.movienightsapi.models.users.User;
 import com.courseproject.movienightsapi.repositories.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserService {
-
+    @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private CalendarService calendarService;
     private Tokens tokens;
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public void createUser(GoogleIdToken.Payload payload, GoogleTokenResponse tokenResponse) {
+    public User createUser(GoogleIdToken.Payload payload, GoogleTokenResponse tokenResponse) {
         User newUser = new User(
             payload.getSubject(),
             payload.getEmail(),
@@ -29,7 +35,9 @@ public class UserService {
         );
         Tokens tokens = new Tokens(tokenResponse);
         setUserTokens(newUser, tokens);
+        calendarService.populateCalendarEventsList(newUser);
         addUserToDB(newUser);
+        return newUser;
     }
 
     private void setUserTokens(User user, Tokens tokens) {
@@ -45,13 +53,13 @@ public class UserService {
     }
 
     public void updateAccessToken(User user, String accessToken, Long accessTokenExpiresAt) {
-        User userToUpdate = userRepository.findById(user.getId()).get();
-        userToUpdate.setAccessToken(accessToken);
-        userToUpdate.setAccessTokenExpiresAt(accessTokenExpiresAt);
-        userRepository.save(userToUpdate);
+        user.setAccessToken(accessToken);
+        user.setAccessTokenExpiresAt(accessTokenExpiresAt);
+        userRepository.save(user);
     }
 
-    public User findUser(String userId) {
-        return userRepository.findByUserId(userId);
+    public void updateEventsList(User user, List<CalendarEvent> eventsList) {
+        user.setEventList(eventsList);
+        userRepository.save(user);
     }
 }

@@ -1,6 +1,7 @@
 package com.courseproject.movienightsapi.services;
 
 import com.courseproject.movienightsapi.models.users.User;
+import com.courseproject.movienightsapi.repositories.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleRefreshTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
@@ -14,13 +15,14 @@ import org.springframework.stereotype.Service;
 public class GoogleService {
     @Autowired
     private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String CLIENT_ID;
     @Value("${spring.security.oauth2.client.registration.google.client-secret}")
     private String CLIENT_SECRET;
 
-    public GoogleCredential getUserCredential(String userId){
-        User user = userService.findUser(userId);
+    public GoogleCredential getUserCredential(User user){
         if (!isTokenValid(user.getAccessTokenExpiresAt())) refreshToken(user);
         return new GoogleCredential().setAccessToken(user.getAccessToken());
     }
@@ -34,7 +36,9 @@ public class GoogleService {
 
     private Boolean isTokenValid(Long tokenExpiresAt) {
         Long now = System.currentTimeMillis();
-        if (tokenExpiresAt < now) return false;
+        if (tokenExpiresAt < now) {
+            return false;
+        }
         return true;
     }
 

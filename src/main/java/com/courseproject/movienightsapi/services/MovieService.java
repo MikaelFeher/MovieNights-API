@@ -37,17 +37,13 @@ public class MovieService {
         return getFromDB(imdbId);
     }
 
-    //TODO: Remove System.out.printf
     private Movie getFromOmdb(String imdbId) {
         Movie movie = restTemplate.getForObject(getUrl + imdbId, Movie.class);
-        System.out.printf("Adding %s to database...\n", movie.getTitle());
         return movie;
     }
 
-    //TODO: Remove System.out.printf
     private Movie getFromDB(String imdbId) {
         Movie movie = movieRepository.findByImdbId(imdbId);
-        System.out.printf("Gettin %s from database...\n", movie.getTitle());
         return movie;
     }
 }

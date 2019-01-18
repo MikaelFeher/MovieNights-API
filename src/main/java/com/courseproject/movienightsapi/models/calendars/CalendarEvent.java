@@ -2,15 +2,19 @@ package com.courseproject.movienightsapi.models.calendars;
 
 import com.google.api.client.util.DateTime;
 import org.springframework.data.annotation.Id;
+import org.springframework.format.annotation.DateTimeFormat;
 
 public class CalendarEvent {
     @Id
     private String id;
     private String eventId;
-    private DateTime startsAt;
-    private DateTime endsAt;
+    private Long startsAt;
+    private Long endsAt;
 
-    public CalendarEvent(String eventId, DateTime startsAt, DateTime endsAt) {
+    public CalendarEvent() {
+    }
+
+    public CalendarEvent(String eventId, Long startsAt, Long endsAt) {
         this.eventId = eventId;
         this.startsAt = startsAt;
         this.endsAt = endsAt;
@@ -24,11 +28,11 @@ public class CalendarEvent {
         return eventId;
     }
 
-    public DateTime getStartsAt() {
+    public Long getStartsAt() {
         return startsAt;
     }
 
-    public DateTime getEndsAt() {
+    public Long getEndsAt() {
         return endsAt;
     }
 
