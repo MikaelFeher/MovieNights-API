@@ -14,8 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/calendar")
@@ -30,9 +28,10 @@ public class CalendarController {
     private MovieRepository movieRepository;
 
     @GetMapping("/getuserevents/{id}")
-    public void getUserCalendarEvents(@PathVariable String id) {
+    public ResponseEntity<?> getUserCalendarEvents(@PathVariable String id) {
         User user = userRepository.findById(id).get();
         userService.updateEventsList(user, calendarService.populateCalendarEventsList(user));
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/availabletimes")
@@ -41,13 +40,15 @@ public class CalendarController {
     }
 
     @PostMapping("/createevent")
-    public void createEvent(@RequestBody BookingDetails details) throws NullPointerException {
+    public ResponseEntity<?> createEvent(@RequestBody BookingDetails details) throws NullPointerException {
         Movie movie = movieRepository.findById(details.getId()).get();
         DateTime startsAt = details.getStartsAt();
         try{
             calendarService.createCalendarEvent(startsAt, movie);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (IOException e) {
             e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 }

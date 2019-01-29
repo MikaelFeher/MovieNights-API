@@ -115,7 +115,7 @@ public class User {
                 ", accessToken='" + accessToken + '\'' +
                 ", refreshToken='" + refreshToken + '\'' +
                 ", accessTokenExpiresAt=" + accessTokenExpiresAt +
-//                ", calendarEventsList=" + calendarEventsList +
+                ", eventList=" + eventList +
                 '}';
     }
 }

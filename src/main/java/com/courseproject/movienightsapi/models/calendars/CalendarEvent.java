@@ -1,8 +1,6 @@
 package com.courseproject.movienightsapi.models.calendars;
 
-import com.google.api.client.util.DateTime;
 import org.springframework.data.annotation.Id;
-import org.springframework.format.annotation.DateTimeFormat;
 
 public class CalendarEvent {
     @Id

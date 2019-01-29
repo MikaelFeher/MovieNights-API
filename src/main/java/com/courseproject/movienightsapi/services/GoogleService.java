@@ -64,16 +64,5 @@ public class GoogleService {
         credential.setExpiresInSeconds(response.getExpiresInSeconds());
         return credential;
 
-//        try {
-//            GoogleTokenResponse response = new GoogleRefreshTokenRequest(
-//                    new NetHttpTransport(), JacksonFactory.getDefaultInstance(), refreshCode, CLIENT_ID, CLIENT_SECRET )
-//                    .execute();
-//
-//            return new GoogleCredential().setAccessToken(response.getAccessToken());
-//        }
-//        catch(Exception e){
-//            e.printStackTrace();
-//            return null;
-//        }
     }
 }

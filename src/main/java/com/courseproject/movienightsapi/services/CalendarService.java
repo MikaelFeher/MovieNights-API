@@ -8,7 +8,6 @@ import com.courseproject.movienightsapi.models.users.User;
 import com.courseproject.movienightsapi.repositories.PlannedEventRepository;
 import com.courseproject.movienightsapi.repositories.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
@@ -17,14 +16,11 @@ import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
-import com.google.api.services.calendar.Calendar.Builder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -103,7 +99,6 @@ public class CalendarService {
                 eventsList.add(new CalendarEvent(event.getId(), startLong, endLong));
             }
         }
-
         return eventsList;
     }
 

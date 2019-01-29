@@ -4,6 +4,8 @@ import com.courseproject.movienightsapi.models.movies.Movie;
 import com.courseproject.movienightsapi.models.movies.MovieList;
 import com.courseproject.movienightsapi.services.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,12 +15,21 @@ public class MovieController {
     private MovieService movieService;
 
     @GetMapping("/search/{name}")
-    public MovieList searchMovies(@PathVariable String name){
-        return movieService.searchMovies(name);
+    public ResponseEntity<?> searchMovies(@PathVariable String name){
+        MovieList result = movieService.searchMovies(name);
+
+        if (result.getMovieList() != null) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @GetMapping("/movie/{imdbId}")
-    public Movie findMovie(@PathVariable String imdbId) {
-        return movieService.findMovie(imdbId);
+    public ResponseEntity<?> findMovie(@PathVariable String imdbId) {
+        Movie result = movieService.findMovie(imdbId);
+        if (result.getTitle() != null) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 }
