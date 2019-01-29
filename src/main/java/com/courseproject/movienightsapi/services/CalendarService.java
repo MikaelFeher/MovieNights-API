@@ -82,7 +82,6 @@ public class CalendarService {
         if (items.isEmpty()) {
             System.out.println("No upcoming events found.");
         } else {
-            System.out.println("Upcoming events");
             for (Event event : items) {
                 DateTime start = event.getStart().getDateTime();
                 if (start == null) { // If it's an all-day-event - store the date instead
