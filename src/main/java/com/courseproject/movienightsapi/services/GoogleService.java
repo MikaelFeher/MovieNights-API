@@ -22,15 +22,24 @@ public class GoogleService {
     @Value("${spring.security.oauth2.client.registration.google.client-secret}")
     private String CLIENT_SECRET;
 
-    public GoogleCredential getUserCredential(User user){
-        if (!isTokenValid(user.getAccessTokenExpiresAt())) refreshToken(user);
+    public GoogleCredential getUserCredential(User user) throws NullPointerException{
+        try {
+            if (!isTokenValid(user.getAccessTokenExpiresAt())) refreshToken(user);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return new GoogleCredential().setAccessToken(user.getAccessToken());
     }
 
-    public void refreshToken(User user) {
+    public void refreshToken(User user) throws NullPointerException {
         GoogleCredential credential = getRefreshedCredentials(user.getRefreshToken());
         String accessToken = credential.getAccessToken();
-        Long tokenExpiresAt = System.currentTimeMillis() + (credential.getExpiresInSeconds() * 1000);
+        Long tokenExpiresAt = 0L;
+        try {
+            tokenExpiresAt = (System.currentTimeMillis() + (credential.getExpiresInSeconds() * 1000));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         userService.updateAccessToken(user, accessToken, tokenExpiresAt);
     }
 

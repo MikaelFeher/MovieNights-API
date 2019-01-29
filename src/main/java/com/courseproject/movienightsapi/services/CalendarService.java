@@ -1,21 +1,30 @@
 package com.courseproject.movienightsapi.services;
 
 import com.courseproject.movienightsapi.models.calendars.CalendarEvent;
+import com.courseproject.movienightsapi.models.calendars.PlannedEvent;
 import com.courseproject.movienightsapi.models.calendars.TimeSlot;
+import com.courseproject.movienightsapi.models.movies.Movie;
 import com.courseproject.movienightsapi.models.users.User;
+import com.courseproject.movienightsapi.repositories.PlannedEventRepository;
 import com.courseproject.movienightsapi.repositories.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventAttendee;
+import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
+import com.google.api.services.calendar.Calendar.Builder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,6 +37,47 @@ public class CalendarService {
     private UserRepository userRepository;
     @Autowired
     private UserService userService;
+    @Autowired
+    private PlannedEventRepository plannedEventRepository;
+    private List<User> users;
+
+    public void createCalendarEvent(DateTime startsAt, Movie movie) throws IOException, NullPointerException {
+        users = userRepository.findAll();
+
+        Event event = new Event()
+                .setSummary("Movie night: " + movie.getTitle())
+                .setLocation("My house")
+                .setDescription("Movie and popcorn");
+
+        DateTime startDateTime = new DateTime(startsAt.getValue());
+        EventDateTime start = new EventDateTime()
+                .setDateTime(startDateTime)
+                .setTimeZone(ZonedDateTime.now().getZone().toString());
+        event.setStart(start);
+
+        Long twoHours = startsAt.getValue() + (3600 * 2) * 1000;
+
+        DateTime endDateTime = new DateTime(twoHours);
+        EventDateTime end = new EventDateTime()
+                .setDateTime(endDateTime)
+                .setTimeZone(ZonedDateTime.now().getZone().toString());
+        event.setEnd(end);
+
+        EventAttendee[] attendees = new EventAttendee[users.size()];
+
+        for (int i = 0; i < users.size(); i++) {
+            attendees[i] = new EventAttendee().setEmail(users.get(i).getEmail());
+        }
+
+        event.setAttendees(Arrays.asList(attendees));
+
+        String calendarId = "primary";
+        event = this.getUserCalendar(users.get(0)).events().insert(calendarId, event).execute();
+        plannedEventRepository.save(new PlannedEvent(startsAt, movie));
+
+        System.out.printf("Event created: %s\n", event.getHtmlLink());
+
+    }
 
     public List<CalendarEvent> populateCalendarEventsList(User user) {
         List<CalendarEvent> eventsList = new ArrayList<>();
@@ -57,6 +107,7 @@ public class CalendarService {
         return eventsList;
     }
 
+
     public Events getUserCalendarEvents(User user) {
         Long start = System.currentTimeMillis();
         Long end = start + 3600 * 24 * 7 * 1000;
@@ -80,11 +131,16 @@ public class CalendarService {
         return events;
     }
 
-    public Calendar getUserCalendar(User user) {
-        GoogleCredential credential = googleService.getUserCredential(user);
-        return new Calendar.Builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
-                .setApplicationName("Movie Nights")
-                .build();
+    public Calendar getUserCalendar(User user) throws NullPointerException {
+        try {
+            GoogleCredential credential = googleService.getUserCredential(user);
+            return new Calendar.Builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
+                    .setApplicationName("Movie Nights")
+                    .build();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public List<TimeSlot> findAvailableTimes() {
@@ -119,13 +175,8 @@ public class CalendarService {
         return availableTimes;
     }
 
-    private void populateUserEventsList(List<User> users, List<TimeSlot> userEvents) throws NullPointerException{
+    private void populateUserEventsList(List<User> users, List<TimeSlot> userEvents){
         users.stream().forEach(user -> {
-            try {
-                userService.updateEventsList(user, populateCalendarEventsList(user));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
             user.getEventList()
                     .stream()
                     .forEach(calendarEvent -> {
@@ -138,11 +189,4 @@ public class CalendarService {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneId.systemDefault());
     }
 
-    private LocalDate getDate(Long value) {
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneId.systemDefault()).toLocalDate();
-    }
-
-    private LocalTime getHour(Long value) {
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneId.systemDefault()).toLocalTime();
-    }
 }
