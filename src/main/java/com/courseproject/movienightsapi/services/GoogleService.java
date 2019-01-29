@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+
 @Service
 public class GoogleService {
     @Autowired
@@ -31,8 +33,9 @@ public class GoogleService {
         return new GoogleCredential().setAccessToken(user.getAccessToken());
     }
 
-    public void refreshToken(User user) throws NullPointerException {
-        GoogleCredential credential = getRefreshedCredentials(user.getRefreshToken());
+    public void refreshToken(User user) throws NullPointerException, IOException {
+        String refreshCode = user.getRefreshToken();
+        GoogleCredential credential = getRefreshedCredentials(refreshCode);
         String accessToken = credential.getAccessToken();
         Long tokenExpiresAt = 0L;
         try {
@@ -51,17 +54,26 @@ public class GoogleService {
         return true;
     }
 
-    private GoogleCredential getRefreshedCredentials(String refreshCode) {
-        try {
-            GoogleTokenResponse response = new GoogleRefreshTokenRequest(
-                    new NetHttpTransport(), JacksonFactory.getDefaultInstance(), refreshCode, CLIENT_ID, CLIENT_SECRET )
-                    .execute();
+    private GoogleCredential getRefreshedCredentials(String refreshCode) throws IOException {
 
-            return new GoogleCredential().setAccessToken(response.getAccessToken());
-        }
-        catch(Exception e){
-            e.printStackTrace();
-            return null;
-        }
+        GoogleTokenResponse response = new GoogleRefreshTokenRequest(
+                new NetHttpTransport(), JacksonFactory.getDefaultInstance(), refreshCode, CLIENT_ID, CLIENT_SECRET)
+                .execute();
+
+        GoogleCredential credential = new GoogleCredential().setAccessToken(response.getAccessToken());
+        credential.setExpiresInSeconds(response.getExpiresInSeconds());
+        return credential;
+
+//        try {
+//            GoogleTokenResponse response = new GoogleRefreshTokenRequest(
+//                    new NetHttpTransport(), JacksonFactory.getDefaultInstance(), refreshCode, CLIENT_ID, CLIENT_SECRET )
+//                    .execute();
+//
+//            return new GoogleCredential().setAccessToken(response.getAccessToken());
+//        }
+//        catch(Exception e){
+//            e.printStackTrace();
+//            return null;
+//        }
     }
 }

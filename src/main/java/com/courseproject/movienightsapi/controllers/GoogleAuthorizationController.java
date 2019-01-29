@@ -10,6 +10,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -59,18 +60,14 @@ public class GoogleAuthorizationController {
         // Create a user, assign tokens and save to db...
         userService.createUser(payload, tokenResponse);
 
-        // TODO: Create functionality to plan events...
-        // TODO: Create functionality to create planned events in the users calendars...
-
         return HttpStatus.OK;
     }
 
     @GetMapping("/refreshtoken/{id}")
-    public User refreshToken(@PathVariable String id) {
+    public ResponseEntity<?> refreshToken(@PathVariable String id) throws IOException {
         User user = userRepository.findById(id).get();
-        System.out.println("Accesstoken: " + user.getAccessToken());
         googleService.refreshToken(user);
-        return userRepository.findById(id).get();
+        return new ResponseEntity<>(userRepository.findById(id).get(), HttpStatus.OK);
     }
 
     private GoogleTokenResponse getGoogleToken(String code) throws IOException {
